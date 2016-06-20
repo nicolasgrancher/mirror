@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Mirror</title>
+	<link href="vendor/weather-icons/weather-icons.css" rel="stylesheet" type="text/css">
+</head>
+<body>
+    <div id="weather">
+        <div id="weather-city">Ville : <span></span></div>
+        <div id="weather-icon"></div>
+        <div id="weather-clouds">Nuages : <span></span>%</div>
+        <div id="weather-humidity">Humidité : <span></span>%</div>
+        <div id="weather-temp">Température : <span></span>°C</div>
+        <div id="weather-temp-min">Temp. min: <span></span>°C</div>
+        <div id="weather-temp-max">Temp. max: <span></span>°C</div>
+        <div id="weather-current">Temps : <span></span></div>
+        <div id="weather-wind">Vent : <span></span></div>
+    </div>
+
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.2.4/jquery.min.js"></script>
+    <script>
+        var iconMap = {
+            "01d": "wi-day-sunny",
+            "02d": "wi-day-cloudy",
+            "03d": "wi-cloudy",
+            "04d": "wi-cloudy-windy",
+            "09d": "wi-showers",
+            "10d": "wi-rain",
+            "11d": "wi-thunderstorm",
+            "13d": "wi-snow",
+            "50d": "wi-fog",
+            "01n": "wi-night-clear",
+            "02n": "wi-night-cloudy",
+            "03n": "wi-night-cloudy",
+            "04n": "wi-night-cloudy",
+            "09n": "wi-night-showers",
+            "10n": "wi-night-rain",
+            "11n": "wi-night-thunderstorm",
+            "13n": "wi-night-snow",
+            "50n": "wi-night-alt-cloudy-windy"
+        };
+
+        var openweathermap = {
+            key: "01513e263be62641a0e3fc76d04334ca",
+            city: "chaville",
+            country: "fr", // ISO 3166 country code
+            language: "fr",
+            units: "metric" // or "imperial"
+        };
+
+        var url = "http://api.openweathermap.org";
+        var baseUri = "/data/2.5";
+        var currentWeatherUri = "/weather";
+        var forecastUri = "/forecast";
+
+        // current weather
+        $.get(url + baseUri + currentWeatherUri, {
+            q: openweathermap.city + "," + openweathermap.country,
+            APPID: openweathermap.key,
+            lang: openweathermap.language,
+            units: openweathermap.units
+        }, function(data) {
+            console.log(data);
+            $("#weather-city span").text(data.name);
+            $("#weather-clouds span").text(data.clouds.all);
+            $("#weather-humidity span").text(data.main.humidity);
+            $("#weather-temp span").text(data.main.temp);
+            $("#weather-temp-min span").text(data.main.temp_min);
+            $("#weather-temp-max span").text(data.main.temp_max);
+            // http://openweathermap.org/weather-conditions
+            $("#weather-current span").text("Group : " + data.weather[0].main + " " + data.weather[0].description + ", id : " + data.weather[0].id);
+            $("#weather-icon").attr("class", "wi weathericon " + iconMap[data.weather[0].icon]);
+            $("#weather-wind span").text(data.wind.speed + "m/s, direction : " + data.wind.deg + "°");
+            // rain.3h Rain volume for the last 3 hours
+            // snow.3h Snow volume for the last 3 hours
+        });
+
+        // forecast
+        $.get(url + baseUri + forecastUri, {
+            q: openweathermap.city + "," + openweathermap.country,
+            APPID: openweathermap.key,
+            lang: openweathermap.language,
+            units: openweathermap.units
+        }, function(data) {
+            console.log(data);
+            //data.list[0].dt; // Time of data forecasted, unix, UTC
+            //data.list[0].main...
+            //data.list[0].weather...
+            //data.list[0].clouds.all;
+            //data.list[0].wind;
+            //data.list[0].rain;
+            //data.list[0].snow;
+        });
+    </script>
+</body>
+</html>
