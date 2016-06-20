@@ -3,20 +3,32 @@
 <head>
     <meta charset="UTF-8">
     <title>Mirror</title>
-	<link href="vendor/weather-icons/weather-icons.css" rel="stylesheet" type="text/css">
+    <link href='https://fonts.googleapis.com/css?family=Open+Sans:400,300' rel='stylesheet' type='text/css'>
+    <link href="vendor/weather-icons/weather-icons.css" rel="stylesheet" type="text/css">
+    <link href="css/style.css" rel="stylesheet" type="text/css">
 </head>
 <body>
-    <div id="weather">
-        <div id="weather-city">Ville : <span></span></div>
-        <div id="weather-icon"></div>
-        <div id="weather-clouds">Nuages : <span></span>%</div>
-        <div id="weather-humidity">Humidité : <span></span>%</div>
-        <div id="weather-temp">Température : <span></span>°C</div>
-        <div id="weather-temp-min">Temp. min: <span></span>°C</div>
-        <div id="weather-temp-max">Temp. max: <span></span>°C</div>
-        <div id="weather-current">Temps : <span></span></div>
-        <div id="weather-wind">Vent : <span></span></div>
-    </div>
+    <table id="weather">
+        <tr>
+            <td>
+                <span id="weather-icon"></span><br>
+                <span id="weather-current"></span>
+            </td>
+            <td>
+                <div id="weather-temp"><span></span>°C</div>
+                (<span id="weather-temp-min"><span></span>°C</span> - <span id="weather-temp-max"><span></span>°C</span>)<br>
+            </td>
+        </tr>
+        <tr>
+            <td colspan="2">
+                <span id="weather-clouds">Nuages : <span></span>%</span>
+                <span id="weather-humidity">Humidité : <span></span>%</span><br>
+
+                <span id="weather-wind">Vent : <span></span></span>
+            </td>
+        </tr>
+    </table>
+    <div class="clear"></div>
 
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.2.4/jquery.min.js"></script>
     <script>
@@ -62,14 +74,14 @@
             units: openweathermap.units
         }, function(data) {
             console.log(data);
-            $("#weather-city span").text(data.name);
             $("#weather-clouds span").text(data.clouds.all);
             $("#weather-humidity span").text(data.main.humidity);
-            $("#weather-temp span").text(data.main.temp);
-            $("#weather-temp-min span").text(data.main.temp_min);
-            $("#weather-temp-max span").text(data.main.temp_max);
+            $("#weather-temp span").text(Math.round(data.main.temp*10)/10);
+            $("#weather-temp-min span").text(Math.round(data.main.temp_min*10)/10);
+            $("#weather-temp-max span").text(Math.round(data.main.temp_max*10)/10);
             // http://openweathermap.org/weather-conditions
-            $("#weather-current span").text("Group : " + data.weather[0].main + " " + data.weather[0].description + ", id : " + data.weather[0].id);
+//            $("#weather-current span").text("Group : " + data.weather[0].main + " " + data.weather[0].description + ", id : " + data.weather[0].id);
+            $("#weather-current").text(data.weather[0].description);
             $("#weather-icon").attr("class", "wi weathericon " + iconMap[data.weather[0].icon]);
             $("#weather-wind span").text(data.wind.speed + "m/s, direction : " + data.wind.deg + "°");
             // rain.3h Rain volume for the last 3 hours
