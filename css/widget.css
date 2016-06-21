@@ -6,3 +6,6 @@
 	margin-left: 10px;
 	text-align: center;
 }
+.forecast-item .temp-min {
+	color: gray;
+}

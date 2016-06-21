@@ -29,7 +29,7 @@ var WeatherWidget = Widget.extend({
     url : "http://api.openweathermap.org",
     baseUri : "/data/2.5",
     currentWeatherUri : "/weather",
-    forecastUri : "/forecast",
+    forecastUri : "/forecast/daily",
     dayNames : ["dim", "lun", "mar", "mer", "jeu", "ven", "sam"],
     initialize : function(id, city, country) {
         Widget.prototype.initialize(id);
@@ -48,10 +48,8 @@ var WeatherWidget = Widget.extend({
         promiseCurrent.then(function(data) {
             var currentWeather = {};
 
-            currentWeather.humidity = '<i class="fa fa-umbrella"></i> ' + data.main.humidity + '%';
-            currentWeather.temp = Math.round(data.main.temp*10)/10 + '°';
-            currentWeather.tempMin = Math.round(data.main.temp_min*10)/10 + '°';
-            currentWeather.tempMax = Math.round(data.main.temp_max*10)/10 + '°';
+            currentWeather.humidity = '<i class="fa fa-umbrella"></i> ' + (data.main.humidity) + '%';
+            currentWeather.temp = Math.round(data.main.temp) + '°';
             currentWeather.description = data.weather[0].description;
             currentWeather.icon = _self.iconMap[data.weather[0].icon];
 
@@ -70,15 +68,15 @@ var WeatherWidget = Widget.extend({
             var forecastWeather = [];
             for(var i in data.list) {
                 var item = data.list[i];
-                var date = new Date(item.dt_txt);
 
                 var obj = {};
-                if (date.getHours() == 9 || date.getHours() == 18) { // forecast for 9:00 and 15:00
-                    obj.date = date;
-                    obj.temp = Math.round(item.main.temp) + '°';
-                    obj.icon = _self.iconMap[item.weather[0].icon];
-                    forecastWeather.push(obj);
-                }
+                
+                obj.date = new Date(item.dt * 1000);
+                obj.tempMax = Math.round(item.temp.max) + '°';
+                obj.tempMin = Math.round(item.temp.min) + '°';
+                obj.icon = _self.iconMap[item.weather[0].icon];
+
+                forecastWeather.push(obj);
             }
 
             _self.forecastWeather = forecastWeather;
@@ -113,24 +111,22 @@ var WeatherWidget = Widget.extend({
     },
     formatForecast : function() {
         var result = '<div class="forecast-item">';
-        result += this.dayNames[this.forecastWeather[0].date.getDay()] + '<br>';
 
-        var date = false;
+        var first = true;
         for(var i in this.forecastWeather) {
             var item = this.forecastWeather[i];
 
-            item.date;
-            item.temp;
-            item.icon;
-
-            if (date && date.getDate() != item.date.getDate()) {
+            if (first) {
+                first = false;
+            } else {
                 result += '</div><div class="forecast-item">';
-                result += this.dayNames[item.date.getDay()] + '<br>';
             }
-            date = item.date;
+
+            result += this.dayNames[item.date.getDay()] + '<br>';
 
             result += this.formatIcon(item.icon) + '<br>';
-            result += item.temp + '<br>';
+            result += item.tempMax + '<br>';
+            result += '<span class="temp-min">' + item.tempMin + '</span><br>';
         }
         result += '</div>';
 
