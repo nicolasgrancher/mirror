@@ -3,107 +3,38 @@
 <head>
     <meta charset="UTF-8">
     <title>Mirror</title>
-    <link href='https://fonts.googleapis.com/css?family=Open+Sans:400,300' rel='stylesheet' type='text/css'>
+    <link href='https://maxcdn.bootstrapcdn.com/font-awesome/4.6.3/css/font-awesome.min.css' rel='stylesheet' type='text/css'>
+    <link href="https://fonts.googleapis.com/css?family=Heebo:100" rel="stylesheet">
     <link href="vendor/weather-icons/weather-icons.css" rel="stylesheet" type="text/css">
+    <link href="css/widget.css" rel="stylesheet" type="text/css">
     <link href="css/style.css" rel="stylesheet" type="text/css">
 </head>
 <body>
-    <table id="weather">
-        <tr>
-            <td>
-                <span id="weather-icon"></span><br>
-                <span id="weather-current"></span>
-            </td>
-            <td>
-                <div id="weather-temp"><span></span>°C</div>
-                (<span id="weather-temp-min"><span></span>°C</span> - <span id="weather-temp-max"><span></span>°C</span>)<br>
-            </td>
-        </tr>
-        <tr>
-            <td colspan="2">
-                <span id="weather-clouds">Nuages : <span></span>%</span>
-                <span id="weather-humidity">Humidité : <span></span>%</span><br>
+    <div id="date" class="widget"></div>
+    <div id="weather" class="widget"></div>
 
-                <span id="weather-wind">Vent : <span></span></span>
-            </td>
-        </tr>
-    </table>
     <div class="clear"></div>
 
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.2.4/jquery.min.js"></script>
+    <script src="js/widget.js"></script>
+    <script src="js/date.js"></script>
+    <script src="js/weather.js"></script>
     <script>
-        var iconMap = {
-            "01d": "wi-day-sunny",
-            "02d": "wi-day-cloudy",
-            "03d": "wi-cloudy",
-            "04d": "wi-cloudy-windy",
-            "09d": "wi-showers",
-            "10d": "wi-rain",
-            "11d": "wi-thunderstorm",
-            "13d": "wi-snow",
-            "50d": "wi-fog",
-            "01n": "wi-night-clear",
-            "02n": "wi-night-cloudy",
-            "03n": "wi-night-cloudy",
-            "04n": "wi-night-cloudy",
-            "09n": "wi-night-showers",
-            "10n": "wi-night-rain",
-            "11n": "wi-night-thunderstorm",
-            "13n": "wi-night-snow",
-            "50n": "wi-night-alt-cloudy-windy"
-        };
+        var date = new DateWidget('#date');
+        var weather = new WeatherWidget('#weather', 'chaville', 'fr');
 
-        var openweathermap = {
-            key: "01513e263be62641a0e3fc76d04334ca",
-            city: "chaville",
-            country: "fr", // ISO 3166 country code
-            language: "fr",
-            units: "metric" // or "imperial"
-        };
+        date.display();
+        weather.display();
 
-        var url = "http://api.openweathermap.org";
-        var baseUri = "/data/2.5";
-        var currentWeatherUri = "/weather";
-        var forecastUri = "/forecast";
-
-        // current weather
-        $.get(url + baseUri + currentWeatherUri, {
-            q: openweathermap.city + "," + openweathermap.country,
-            APPID: openweathermap.key,
-            lang: openweathermap.language,
-            units: openweathermap.units
-        }, function(data) {
-            console.log(data);
-            $("#weather-clouds span").text(data.clouds.all);
-            $("#weather-humidity span").text(data.main.humidity);
-            $("#weather-temp span").text(Math.round(data.main.temp*10)/10);
-            $("#weather-temp-min span").text(Math.round(data.main.temp_min*10)/10);
-            $("#weather-temp-max span").text(Math.round(data.main.temp_max*10)/10);
-            // http://openweathermap.org/weather-conditions
-//            $("#weather-current span").text("Group : " + data.weather[0].main + " " + data.weather[0].description + ", id : " + data.weather[0].id);
-            $("#weather-current").text(data.weather[0].description);
-            $("#weather-icon").attr("class", "wi weathericon " + iconMap[data.weather[0].icon]);
-            $("#weather-wind span").text(data.wind.speed + "m/s, direction : " + data.wind.deg + "°");
-            // rain.3h Rain volume for the last 3 hours
-            // snow.3h Snow volume for the last 3 hours
-        });
-
-        // forecast
-        $.get(url + baseUri + forecastUri, {
-            q: openweathermap.city + "," + openweathermap.country,
-            APPID: openweathermap.key,
-            lang: openweathermap.language,
-            units: openweathermap.units
-        }, function(data) {
-            console.log(data);
-            //data.list[0].dt; // Time of data forecasted, unix, UTC
-            //data.list[0].main...
-            //data.list[0].weather...
-            //data.list[0].clouds.all;
-            //data.list[0].wind;
-            //data.list[0].rain;
-            //data.list[0].snow;
-        });
+        setInterval(refreshDate, 1000 * 10); // 10 sec
+        function refreshDate() {
+            date.display();
+        }
+        setInterval(refreshWeather, 1000 * 60 * 30); // 30 minutes
+        function refreshWeather() {
+            weather.display();
+        }
     </script>
+    
 </body>
 </html>

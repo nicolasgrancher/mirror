@@ -5,23 +5,15 @@ html, body {
 body {
     background-color: black;
     color: white;
-    font-family: 'Open Sans', sans-serif;
-}
-#weather {
-    float: right;
-    text-align: center;
-    vertical-align: middle;
-}
-#weather-icon {
-    font-size: 5em;
-}
-#weather-city {
-    font-size: 1.5em;
-}
-#weather-temp {
-    font-size: 3em;
-    margin-bottom: -10px;
+    font-family: 'Heebo', sans-serif;
 }
 .clear {
     clear: both;
+}
+#date {
+    float: left;
+}
+#weather {
+    float: right;
+    text-align: right;
 }
