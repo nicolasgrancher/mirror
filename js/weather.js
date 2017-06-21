@@ -62,7 +62,7 @@ var WeatherWidget = Widget.extend({
             currentWeather.temp = Math.round(data.main.temp) + '°';
             currentWeather.description = data.weather[0].description;
             currentWeather.icon = _self.iconMap[data.weather[0].icon];
-            currentWeather.windChill = Math.round(_self.getWindChill(data.main.temp, data.wind.speed * 3.6)* 10) / 10 + "°";
+            currentWeather.windChill = Math.round(_self.getWindChill(data.main.temp, data.wind.speed * 3.6)) + "°";
             currentWeather.wind = '<i class="wi wi-strong-wind"></i> ' + Math.round(data.wind.speed * 3.6) + "km/h ";
 
             // http://openweathermap.org/weather-conditions
@@ -113,9 +113,15 @@ var WeatherWidget = Widget.extend({
         }).appendTo(this.id);
     },
     getTitle : function() {
-        return this.currentWeather.temp +
-            '<sub>' + this.currentWeather.windChill + '</sub>' +
-            this.formatIcon(this.currentWeather.icon);
+        var title = this.currentWeather.temp;
+
+        if (this.currentWeather.windChill != this.currentWeather.temp) {
+            title += '<sub>' + this.currentWeather.windChill + '</sub>';
+        }
+
+        title += this.formatIcon(this.currentWeather.icon);
+
+        return title;
     },
     getContent : function() {
         return this.currentWeather.description + "<br>" +
