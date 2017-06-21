@@ -19,6 +19,16 @@ var WeatherWidget = Widget.extend({
         "13n": "wi-night-snow",
         "50n": "wi-night-alt-cloudy-windy"
     },
+    // directionMap : {
+    //     "E": "&#8594;",
+    //     "NE": "&#8599;",
+    //     "N": "&#8593;",
+    //     "NO": "&#8598;",
+    //     "O": "&#8592;",
+    //     "SO": "&#8601;",
+    //     "S": "&#8595;",
+    //     "SE": "&#8600;"
+    // },
     openweathermap : {
         key: "01513e263be62641a0e3fc76d04334ca",
         city: "paris",
@@ -48,10 +58,12 @@ var WeatherWidget = Widget.extend({
         promiseCurrent.then(function(data) {
             var currentWeather = {};
 
-            currentWeather.humidity = '<i class="fa fa-umbrella"></i> ' + (data.main.humidity) + '%';
+            currentWeather.humidity = '<i class="wi wi-humidity"></i> ' + (data.main.humidity) + '%';
             currentWeather.temp = Math.round(data.main.temp) + '°';
             currentWeather.description = data.weather[0].description;
             currentWeather.icon = _self.iconMap[data.weather[0].icon];
+            currentWeather.windChill = Math.round(_self.getWindChill(data.main.temp, data.wind.speed * 3.6)* 10) / 10 + "°";
+            currentWeather.wind = '<i class="wi wi-strong-wind"></i> ' + Math.round(data.wind.speed * 3.6) + "km/h ";
 
             // http://openweathermap.org/weather-conditions
             // "Group : " + data.weather[0].main + " " + data.weather[0].description + ", id : " + data.weather[0].id;
@@ -101,10 +113,14 @@ var WeatherWidget = Widget.extend({
         }).appendTo(this.id);
     },
     getTitle : function() {
-        return this.currentWeather.temp + " " + this.formatIcon(this.currentWeather.icon);
+        return this.currentWeather.temp +
+            '<sub>' + this.currentWeather.windChill + '</sub>' +
+            this.formatIcon(this.currentWeather.icon);
     },
     getContent : function() {
-        return this.currentWeather.description + "<br>" + this.currentWeather.humidity + "<br>" + this.formatForecast();
+        return this.currentWeather.description + "<br>" +
+            this.currentWeather.wind + " " + this.currentWeather.humidity + "<br>" +
+            this.formatForecast();
     },
     formatIcon: function(icon) {
         return '<span class="wi weathericon ' + icon + '"></span>'
@@ -149,5 +165,36 @@ var WeatherWidget = Widget.extend({
             lang: this.openweathermap.language,
             units: this.openweathermap.units
         });
+    },
+    // getDirectionByDegree : function (degree) {
+    //     if (degree <= 22.5) return 'e';
+    //     if (degree <= 67.5) return 'ne';
+    //     if (degree <= 112.5) return 'n';
+    //     if (degree <= 157.5) return 'nw';
+    //     if (degree <= 202.5) return 'w';
+    //     if (degree <= 247.5) return 'sw';
+    //     if (degree <= 292.5) return 's;';
+    //     if (degree <= 337.5) return 'se';
+    //     if (degree > 337.5) return 'e';
+    // },
+    // getDirection : function (degree) {
+    //     return '<i class="wi wi-wind wi-towards-w' + this.getDirectionByDegree(degree) + '"></i>';
+    // },
+    // @see https://fr.wikipedia.org/wiki/Refroidissement_%C3%A9olien
+    getWindChill : function (Tc, Vkmh) {
+        if (Tc >= 10)
+            return Tc;
+
+        var Rc;
+
+        if (Vkmh >= 4.8 && Vkmh <= 177) {
+            Rc = 13.12 + 0.6215*Tc + (0.3965*Tc - 11.37) * Math.pow(Vkmh, 0.16);
+        } else if (Vkmh < 4.8) {
+            Rc = Tc + 0.2 * (0.1345*Tc - 1.59) * Vkmh;
+        } else {
+            Rc = Tc;
+        }
+
+        return Rc;
     }
 });

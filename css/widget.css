@@ -1,6 +1,10 @@
 .widget .title {
     font-size: 3em;
 }
+.widget .title sub{
+    font-size: 0.4em;
+	margin-left: -15px;
+}
 .forecast-item {
 	float: left;
 	margin-left: 10px;
