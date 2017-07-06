@@ -1,5 +1,5 @@
 var WeatherWidget = Widget.extend({
-   iconMap : {
+    iconMap: {
         "01d": "wi-day-sunny",
         "02d": "wi-day-cloudy",
         "03d": "wi-cloudy",
@@ -29,25 +29,25 @@ var WeatherWidget = Widget.extend({
     //     "S": "&#8595;",
     //     "SE": "&#8600;"
     // },
-    openweathermap : {
+    openweathermap: {
         key: "01513e263be62641a0e3fc76d04334ca",
         city: "paris",
         country: "fr", // ISO 3166 country code
         language: "fr",
         units: "metric" // or "imperial"
     },
-    url : "http://api.openweathermap.org",
-    baseUri : "/data/2.5",
-    currentWeatherUri : "/weather",
-    forecastUri : "/forecast/daily",
-    dayNames : ["dim", "lun", "mar", "mer", "jeu", "ven", "sam"],
-    initialize : function(id, city, country) {
+    url: "http://api.openweathermap.org",
+    baseUri: "/data/2.5",
+    currentWeatherUri: "/weather",
+    forecastUri: "/forecast/daily",
+    dayNames: ["dim", "lun", "mar", "mer", "jeu", "ven", "sam"],
+    initialize: function (id, city, country) {
         Widget.prototype.initialize(id);
 
         this.openweathermap.city = city;
         this.openweathermap.country = country;
     },
-    display : function() {
+    display: function () {
         var _self = this;
         var promiseCurrent = this.getCurrentWeather();
         var promiseForecast = this.getForecast();
@@ -55,14 +55,14 @@ var WeatherWidget = Widget.extend({
         var flagCurrent = false;
         var flagForecast = false;
 
-        promiseCurrent.then(function(data) {
+        promiseCurrent.then(function (data) {
             var currentWeather = {};
 
             currentWeather.humidity = '<i class="wi wi-humidity"></i> ' + (data.main.humidity) + '%';
             currentWeather.temp = Math.round(data.main.temp) + '°';
             currentWeather.description = data.weather[0].description;
             currentWeather.icon = _self.iconMap[data.weather[0].icon];
-            currentWeather.windChill = Math.round(_self.getWindChill(data.main.temp, data.wind.speed * 3.6)) + "°";
+            currentWeather.apparentTemperature = Math.round(_self.getApparentTemperature(data.main.temp, data.wind.speed * 3.6, data.main.humidity / 100, data.main.pressure)) + "°";
             currentWeather.wind = '<i class="wi wi-strong-wind"></i> ' + Math.round(data.wind.speed * 3.6) + "km/h ";
 
             // http://openweathermap.org/weather-conditions
@@ -76,13 +76,13 @@ var WeatherWidget = Widget.extend({
                 _self.refresh();
         });
 
-        promiseForecast.then(function(data) {
+        promiseForecast.then(function (data) {
             var forecastWeather = [];
-            for(var i in data.list) {
+            for (var i in data.list) {
                 var item = data.list[i];
 
                 var obj = {};
-                
+
                 obj.date = new Date(item.dt * 1000);
                 obj.tempMax = Math.round(item.temp.max) + '°';
                 obj.tempMin = Math.round(item.temp.min) + '°';
@@ -99,7 +99,7 @@ var WeatherWidget = Widget.extend({
                 _self.refresh();
         });
     },
-    refresh : function() {
+    refresh: function () {
         $(this.id).html('');
 
         $('<div>', {
@@ -112,30 +112,30 @@ var WeatherWidget = Widget.extend({
             html: this.getContent()
         }).appendTo(this.id);
     },
-    getTitle : function() {
+    getTitle: function () {
         var title = this.currentWeather.temp;
 
-        if (this.currentWeather.windChill != this.currentWeather.temp) {
-            title += '<sub>' + this.currentWeather.windChill + '</sub>';
+        if (this.currentWeather.apparentTemperature != this.currentWeather.temp) {
+            title += '<sub>' + this.currentWeather.apparentTemperature + '</sub>';
         }
 
         title += this.formatIcon(this.currentWeather.icon);
 
         return title;
     },
-    getContent : function() {
+    getContent: function () {
         return this.currentWeather.description + "<br>" +
             this.currentWeather.wind + " " + this.currentWeather.humidity + "<br>" +
             this.formatForecast();
     },
-    formatIcon: function(icon) {
+    formatIcon: function (icon) {
         return '<span class="wi weathericon ' + icon + '"></span>'
     },
-    formatForecast : function() {
+    formatForecast: function () {
         var result = '<div class="forecast-item">';
 
         var first = true;
-        for(var i in this.forecastWeather) {
+        for (var i in this.forecastWeather) {
             var item = this.forecastWeather[i];
 
             if (first) {
@@ -154,7 +154,7 @@ var WeatherWidget = Widget.extend({
 
         return result;
     },
-    getCurrentWeather : function() {
+    getCurrentWeather: function () {
         var _self = this;
 
         return $.get(this.url + this.baseUri + this.currentWeatherUri, {
@@ -164,7 +164,7 @@ var WeatherWidget = Widget.extend({
             units: this.openweathermap.units
         });
     },
-    getForecast : function() {
+    getForecast: function () {
         return $.get(this.url + this.baseUri + this.forecastUri, {
             q: this.openweathermap.city + "," + this.openweathermap.country,
             APPID: this.openweathermap.key,
@@ -186,21 +186,80 @@ var WeatherWidget = Widget.extend({
     // getDirection : function (degree) {
     //     return '<i class="wi wi-wind wi-towards-w' + this.getDirectionByDegree(degree) + '"></i>';
     // },
-    // @see https://fr.wikipedia.org/wiki/Refroidissement_%C3%A9olien
-    getWindChill : function (Tc, Vkmh) {
+    /**
+     * @param Tc temperature in celcius
+     * @param Vkmh wind speed in km/h
+     * @param R relative humidity
+     * @param P pressure
+     * @returns {*}
+     */
+    getApparentTemperature: function (Tc, Vkmh, R, P) {
+        if (Tc < 10) {
+            return this.getWindChill(Tc, Vkmh);
+        }
+
+        return this.getHeatIndex(Tc, R, P);
+    },
+    /**
+     * @see https://fr.wikipedia.org/wiki/Refroidissement_%C3%A9olien
+     *
+     * @param Tc temperature in celcius
+     * @param Vkmh wind speed in km/h
+     * @returns {*}
+     */
+    getWindChill: function (Tc, Vkmh) {
         if (Tc >= 10)
             return Tc;
 
         var Rc;
 
         if (Vkmh >= 4.8 && Vkmh <= 177) {
-            Rc = 13.12 + 0.6215*Tc + (0.3965*Tc - 11.37) * Math.pow(Vkmh, 0.16);
+            Rc = 13.12 + 0.6215 * Tc + (0.3965 * Tc - 11.37) * Math.pow(Vkmh, 0.16);
         } else if (Vkmh < 4.8) {
-            Rc = Tc + 0.2 * (0.1345*Tc - 1.59) * Vkmh;
+            Rc = Tc + 0.2 * (0.1345 * Tc - 1.59) * Vkmh;
         } else {
             Rc = Tc;
         }
 
         return Rc;
+    },
+    /**
+     * @see https://fr.m.wikipedia.org/wiki/Indice_de_chaleur
+     *
+     * @param Tc temperature in celcius
+     * @param R relative humidity
+     * @param P pressure
+     * @returns {*}
+     */
+    getHeatIndex: function (Tc, R, P) {
+        if (P < 16) {
+            return Tc;
+        }
+
+        if (Tc < 27 || R < 0.40) { // ou point de rosée < 12°C
+            return Tc;
+        }
+
+        var c1 = -42.379;
+        var c2 = 2.04901523;
+        var c3 = 10.14333127;
+        var c4 = -0.22475541;
+        var c5 = -6.83783 * 0.001;
+        var c6 = -5.481717;
+        var c7 = 1.22874 * 0.001;
+        var c8 = 8.5282 * 0.0001;
+        var c9 = -1.99 * 0.000001;
+
+        var Tf = this.celciusToFahrenheit(Tc);
+
+        var HI = c1 + c2 * Tf + c3 * R + c4 * Tf * R + c5 * Tf * Tf + c6 * R * R + c7 * Tf * Tf * R + c8 * Tf * R * R + c9 * Tf * Tf * R * R;
+
+        return this.fahrenheitToCelcius(HI);
+    },
+    fahrenheitToCelcius: function (Tf) {
+        return (Tf - 32) / 1.8;
+    },
+    celciusToFahrenheit: function (Tc) {
+        return (Tc * 1.8) + 32;
     }
 });
